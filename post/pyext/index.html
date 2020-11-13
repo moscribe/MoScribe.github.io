@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>[编程随笔]Python的C扩展 - 计算与编程</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Moscribe" /><meta name="description" content="引 Python最大的用处大概就是可以整合其它的语言
+对于Python来说，或者更明确一点，对于CPython来说，速度慢是其最大的弱点，没有之一。CPython所坚持的运行时检查类型决定了短时间内其运行速度的极限。既然如此，那索性放弃一部分的Python代码，用C代替之。
+" /><meta name="keywords" content="Hugo, Programming, Python, C&#43;&#43;" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.78.1 with theme even" />
+
+
+<link rel="canonical" href="https://moscribe.github.io/post/pyext/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="[编程随笔]Python的C扩展" />
+<meta property="og:description" content="引
+Python最大的用处大概就是可以整合其它的语言
+对于Python来说，或者更明确一点，对于CPython来说，速度慢是其最大的弱点，没有之一。CPython所坚持的运行时检查类型决定了短时间内其运行速度的极限。既然如此，那索性放弃一部分的Python代码，用C代替之。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://moscribe.github.io/post/pyext/" />
+<meta property="article:published_time" content="2020-11-12T13:57:48+08:00" />
+<meta property="article:modified_time" content="2020-11-12T13:57:48+08:00" />
+<meta itemprop="name" content="[编程随笔]Python的C扩展">
+<meta itemprop="description" content="引
+Python最大的用处大概就是可以整合其它的语言
+对于Python来说，或者更明确一点，对于CPython来说，速度慢是其最大的弱点，没有之一。CPython所坚持的运行时检查类型决定了短时间内其运行速度的极限。既然如此，那索性放弃一部分的Python代码，用C代替之。">
+<meta itemprop="datePublished" content="2020-11-12T13:57:48+08:00" />
+<meta itemprop="dateModified" content="2020-11-12T13:57:48+08:00" />
+<meta itemprop="wordCount" content="3863">
+
+
+
+<meta itemprop="keywords" content="Python," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="[编程随笔]Python的C扩展"/>
+<meta name="twitter:description" content="引
+Python最大的用处大概就是可以整合其它的语言
+对于Python来说，或者更明确一点，对于CPython来说，速度慢是其最大的弱点，没有之一。CPython所坚持的运行时检查类型决定了短时间内其运行速度的极限。既然如此，那索性放弃一部分的Python代码，用C代替之。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">MoScribe</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">主页</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">归档</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">MoScribe</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">主页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">归档</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">分类</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">[编程随笔]Python的C扩展</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2020-11-12 </span>
+        <div class="post-category">
+            <a href="/categories/python/"> Python </a>
+            </div>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#引">引</a></li>
+    <li><a href="#如何写一个c扩展">如何写一个C扩展</a></li>
+    <li><a href="#两个例子">两个例子</a>
+      <ul>
+        <li><a href="#cpython中的模块">CPython中的模块</a></li>
+        <li><a href="#numpy中的c语言扩展">Numpy中的C语言扩展</a></li>
+      </ul>
+    </li>
+    <li><a href="#结">结</a></li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h1 id="引">引</h1>
+<p>Python最大的用处大概就是可以整合其它的语言</p>
+<p>对于Python来说，或者更明确一点，对于CPython来说，速度慢是其最大的弱点，没有之一。CPython所坚持的运行时检查类型决定了短时间内其运行速度的极限。既然如此，那索性放弃一部分的Python代码，用C代替之。</p>
+<h1 id="如何写一个c扩展">如何写一个C扩展</h1>
+<p>首先，我们要有</p>
+<ul>
+<li>Python3的解释器</li>
+<li>一个GNU编译工具链</li>
+<li>一个用来写代码的编辑器</li>
+</ul>
+<p>然后我们写出我们的C语言的函数</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="nf">fac</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">else</span> <span class="k">return</span> <span class="n">n</span><span class="o">*</span><span class="n">fac</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果想要用Python调用这个函数，大致可以分为以下几步</p>
+<ol>
+<li>
+<p>给你的模块想一个好记的名字，比如我们这个就可以叫做<strong>extest</strong>，创建一个extest.c，include一个&quot;Python.h&quot;的头文件，这个头文件里包含了CPython开发者为你准备的一切。extest.c里的函数声明应该是长成这个样子</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyObject</span><span class="o">*</span> <span class="nf">extest_fac</span><span class="p">(</span><span class="n">PyObject</span><span class="o">*</span> <span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span><span class="o">*</span> <span class="n">args</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>函数是静态的，返回一个Python的对象指针，函数名就是 &ldquo;mod name&rdquo;_&ldquo;function name&rdquo; 的格式，具体叫什么名字没有太大的限制，只是这样看起来比较保护头发。self这个指针指向模块本身，args指向一系列的参数，当然我们这里就只有一个整数n。</p>
+<p>一个模块里的函数大多都长成这个样子，除了一些特殊的用来初始化的函数。如果你又写了一个计算斐波那契数列的函数，那应该就是</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyObject</span><span class="o">*</span> <span class="nf">extest_fib</span><span class="p">(</span><span class="n">PyObject</span><span class="o">*</span> <span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span><span class="o">*</span> <span class="n">args</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>的样子。</p>
+</li>
+<li>
+<p>函数声明过后就得有明确的定义</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyObject</span><span class="o">*</span> <span class="nf">extest_fac</span><span class="p">(</span><span class="n">PyObject</span><span class="o">*</span> <span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span><span class="o">*</span> <span class="n">args</span><span class="p">){</span>
+    <span class="kt">int</span> <span class="n">res</span><span class="p">,</span> <span class="n">num</span><span class="p">;</span><span class="c1">// 给我们的函数用的
+</span><span class="c1"></span>    <span class="n">PyObject</span><span class="o">*</span> <span class="n">retval</span><span class="p">;</span> <span class="c1">// 给Python的函数用的
+</span><span class="c1"></span>       
+    <span class="c1">// 首先就是分析参数，如果分析失败，那啥都不用做了
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">PyArg_ParseTuple</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&#34;i&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">num</span><span class="p">))</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="c1">// 开始调用我们写的函数
+</span><span class="c1"></span>    <span class="n">res</span> <span class="o">=</span> <span class="n">fac</span><span class="p">(</span><span class="n">num</span><span class="p">);</span>
+ <span class="c1">// 把计算的结果变成Python可以识别的PyObject*
+</span><span class="c1"></span>    <span class="n">retval</span> <span class="o">=</span> <span class="p">(</span><span class="n">PyObject</span><span class="o">*</span><span class="p">)</span> <span class="n">Py_BuildValue</span><span class="p">(</span><span class="s">&#34;i&#34;</span><span class="p">,</span> <span class="n">res</span><span class="p">);</span>
+       
+ <span class="k">return</span> <span class="n">retval</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里的两个以<strong>Py</strong>开头的函数从名字上就可以看出来，第一个<em>PyArg_ParseTuple</em>就是要把Python形式的参数转化成C语言形式的参数，调用形式和C语言里面的 <em>fscanf()<em>差不多，中间的是格式化的字符串，具体每个字符代表的意思可以直接查官方文档。这里的i就代表整数。第二个</em>Py_BuildValue</em>就是将C语言形式的参数转化成Python形式的参数，返回值当然是一个Py的对象指针。</p>
+</li>
+<li>
+<p>写完函数后当然要给这个函数写一个文档</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">PyDoc_STRVAR</span><span class="p">(</span><span class="n">fac_doc</span><span class="p">,</span> <span class="s">&#34;This function get the faction number.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>同样，这个以Py开头的宏是CPython开发者提供的，以<em>fac_doc</em> 命名也是为了保护头发。</p>
+</li>
+<li>
+<p>接下来一步就很重要了，定义一个结构体数组，里面需要包含这个模块里面所有的函数</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyMethodDef</span> <span class="n">ExtesMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">{</span><span class="s">&#34;fac&#34;</span><span class="p">,</span> <span class="n">extest_fac</span><span class="p">,</span> <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="n">fac_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当然我们这里就只有一个函数。</p>
+<p>这个结构体里有两个字符串指针，一个函数指针，以及一个神秘的整数。两个字符串指针就是函数名与函数的文档，这两个都是给Python解释器用的。函数指针就指向我们定义的给Python调用的指针。最后这个数组一定要以{NULL, NULL, 0, NULL}结尾，就好像字符串末尾的'\0&rsquo;一样。</p>
+<p>至于这个整数，则是取值是一系列的宏，而<strong>METH_VARARAS</strong>意思就是最一般的情况，有两个参数self和args。除此之外还有METH_NOARGS, METH_KEYWORDS, METH_O等，具体所表示的意思请查官方文档。</p>
+</li>
+<li>
+<p>定义了函数之后就要定义一个描述整个模块的结构体</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyModuleDef</span> <span class="n">ExtestModule</span> <span class="o">=</span> <span class="p">{</span>
+                                 <span class="n">PyModuleDef_HEAD_INIT</span><span class="p">,</span>
+                                   <span class="s">&#34;Extest&#34;</span><span class="p">,</span>
+                                   <span class="n">extest_module_doc</span><span class="p">,</span>
+                                   <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                   <span class="n">ExtesMethods</span><span class="p">,</span>
+                                   <span class="nb">NULL</span><span class="p">,</span>
+                                   <span class="nb">NULL</span><span class="p">,</span>
+                                   <span class="nb">NULL</span><span class="p">,</span>
+                                   <span class="nb">NULL</span><span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><em>PyModuleDef_HEAD_INIT</em>这个宏在每个模块的定义里都得有一个。而后就是模块的名字，文档，模块大小，模块函数的结构体等等，这些东西光说很抽象，需要结合实际的例子。</p>
+</li>
+<li>
+<p>在整个C文件的最后，定义一个初始化函数</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">PyMODINIT_FUNC</span>
+<span class="nf">PyInit_Extest</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">PyObject</span><span class="o">*</span> <span class="n">mod</span><span class="p">;</span>
+   
+    <span class="n">mod</span> <span class="o">=</span> <span class="n">PyModule_Create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ExtestModule</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">NULL</span> <span class="o">==</span> <span class="n">mod</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+   
+    <span class="k">return</span> <span class="n">mod</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>初始化函数的名字一定是**PyInit_**&ldquo;modname&rdquo;，返回值是一个Python对象指针。函数的初始化主要是要调用**PyModule_Create**这个函数，而这个函数又以我们刚才定义的模块描述的结构体为参数。</p>
+</li>
+</ol>
+<p>C文件的基本结构就是这样了，具体的实现则比这个要复杂的多。</p>
+<p>写完C的部分后，还需要写一个<em>setup.py</em>的文件，对于我们这个例子，setup.py的内容十分简单</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="ch">#!/usr/bin/env python</span>
+
+<span class="kn">from</span> <span class="nn">distutils.core</span> <span class="kn">import</span> <span class="n">setup</span><span class="p">,</span> <span class="n">Extension</span>
+
+<span class="n">MOD</span> <span class="o">=</span> <span class="s1">&#39;Extest&#39;</span>
+<span class="n">SRC</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;extest.c&#39;</span><span class="p">]</span>
+<span class="n">EXTM</span> <span class="o">=</span> <span class="p">[</span><span class="n">Extension</span><span class="p">(</span><span class="n">MOD</span><span class="p">,</span> <span class="n">SRC</span><span class="p">)]</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">setup</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">MOD</span><span class="p">,</span> <span class="n">ext_modules</span><span class="o">=</span><span class="n">EXTM</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>也就是使用<em>Extension</em>这个函数创建一个扩展，用<em>setup</em>这个函数初始化包。setup.py文件具体要做的事情就是告诉Python解释器每个源文件的位置以及包的名字。最后使用命令</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sh" data-lang="sh">python setup.py build
+</code></pre></td></tr></table>
+</div>
+</div><p>Python解释器会为你做完接下来的事情。</p>
+<h1 id="两个例子">两个例子</h1>
+<h2 id="cpython中的模块">CPython中的模块</h2>
+<p>如果光看上面的话，总觉得太简单，一到实际使用还是一头的雾水。所以我还得研究几个实例。</p>
+<p>在CPython的源码里面找到<strong>mathmodule.c</strong>这个文件，是Python中的常用的数学函数与数学常数。我们倒着看，从最后面的初始化函数看起</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">PyMODINIT_FUNC</span>
+<span class="nf">PyInit_math</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">m</span><span class="p">;</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="n">PyModule_Create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mathmodule</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">goto</span> <span class="n">finally</span><span class="p">;</span>
+
+    <span class="n">PyModule_AddObject</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s">&#34;pi&#34;</span><span class="p">,</span> <span class="n">PyFloat_FromDouble</span><span class="p">(</span><span class="n">Py_MATH_PI</span><span class="p">));</span>
+    <span class="n">PyModule_AddObject</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s">&#34;e&#34;</span><span class="p">,</span> <span class="n">PyFloat_FromDouble</span><span class="p">(</span><span class="n">Py_MATH_E</span><span class="p">));</span>
+    <span class="n">PyModule_AddObject</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s">&#34;tau&#34;</span><span class="p">,</span> <span class="n">PyFloat_FromDouble</span><span class="p">(</span><span class="n">Py_MATH_TAU</span><span class="p">));</span>  <span class="cm">/* 2pi */</span>
+    <span class="n">PyModule_AddObject</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s">&#34;inf&#34;</span><span class="p">,</span> <span class="n">PyFloat_FromDouble</span><span class="p">(</span><span class="n">m_inf</span><span class="p">()));</span>
+<span class="cp">#if !defined(PY_NO_SHORT_FLOAT_REPR) || defined(Py_NAN)
+</span><span class="cp"></span>    <span class="n">PyModule_AddObject</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s">&#34;nan&#34;</span><span class="p">,</span> <span class="n">PyFloat_FromDouble</span><span class="p">(</span><span class="n">m_nan</span><span class="p">()));</span>
+<span class="cp">#endif
+</span><span class="cp"></span>
+  <span class="nl">finally</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">m</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>与上面看到的初始化函数差不多，只不过多了几行<em>PyModule_AddObject</em>函数，这几个函数的作用也很清楚，就是给这个模块加一些数学常量，比如π，e，无穷大等等。</p>
+<p>接下来感受一下这个模块庞大的methods表</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyMethodDef</span> <span class="n">math_methods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">{</span><span class="s">&#34;acos&#34;</span><span class="p">,</span>            <span class="n">math_acos</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_acos_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;acosh&#34;</span><span class="p">,</span>           <span class="n">math_acosh</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_acosh_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;asin&#34;</span><span class="p">,</span>            <span class="n">math_asin</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_asin_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;asinh&#34;</span><span class="p">,</span>           <span class="n">math_asinh</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_asinh_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;atan&#34;</span><span class="p">,</span>            <span class="n">math_atan</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_atan_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;atan2&#34;</span><span class="p">,</span>           <span class="n">math_atan2</span><span class="p">,</span>     <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_atan2_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;atanh&#34;</span><span class="p">,</span>           <span class="n">math_atanh</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_atanh_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;ceil&#34;</span><span class="p">,</span>            <span class="n">math_ceil</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_ceil_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;copysign&#34;</span><span class="p">,</span>        <span class="n">math_copysign</span><span class="p">,</span>  <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_copysign_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;cos&#34;</span><span class="p">,</span>             <span class="n">math_cos</span><span class="p">,</span>       <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_cos_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;cosh&#34;</span><span class="p">,</span>            <span class="n">math_cosh</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_cosh_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;degrees&#34;</span><span class="p">,</span>         <span class="n">math_degrees</span><span class="p">,</span>   <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_degrees_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;erf&#34;</span><span class="p">,</span>             <span class="n">math_erf</span><span class="p">,</span>       <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_erf_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;erfc&#34;</span><span class="p">,</span>            <span class="n">math_erfc</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_erfc_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;exp&#34;</span><span class="p">,</span>             <span class="n">math_exp</span><span class="p">,</span>       <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_exp_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;expm1&#34;</span><span class="p">,</span>           <span class="n">math_expm1</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_expm1_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;fabs&#34;</span><span class="p">,</span>            <span class="n">math_fabs</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_fabs_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;factorial&#34;</span><span class="p">,</span>       <span class="n">math_factorial</span><span class="p">,</span> <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_factorial_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;floor&#34;</span><span class="p">,</span>           <span class="n">math_floor</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_floor_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;fmod&#34;</span><span class="p">,</span>            <span class="n">math_fmod</span><span class="p">,</span>      <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_fmod_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;frexp&#34;</span><span class="p">,</span>           <span class="n">math_frexp</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_frexp_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;fsum&#34;</span><span class="p">,</span>            <span class="n">math_fsum</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_fsum_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;gamma&#34;</span><span class="p">,</span>           <span class="n">math_gamma</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_gamma_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;gcd&#34;</span><span class="p">,</span>             <span class="n">math_gcd</span><span class="p">,</span>       <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_gcd_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;hypot&#34;</span><span class="p">,</span>           <span class="n">math_hypot</span><span class="p">,</span>     <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_hypot_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;isclose&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span> <span class="n">math_isclose</span><span class="p">,</span> <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span>
+    <span class="n">math_isclose_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;isfinite&#34;</span><span class="p">,</span>        <span class="n">math_isfinite</span><span class="p">,</span>  <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_isfinite_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;isinf&#34;</span><span class="p">,</span>           <span class="n">math_isinf</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_isinf_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;isnan&#34;</span><span class="p">,</span>           <span class="n">math_isnan</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_isnan_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;ldexp&#34;</span><span class="p">,</span>           <span class="n">math_ldexp</span><span class="p">,</span>     <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_ldexp_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;lgamma&#34;</span><span class="p">,</span>          <span class="n">math_lgamma</span><span class="p">,</span>    <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_lgamma_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;log&#34;</span><span class="p">,</span>             <span class="n">math_log</span><span class="p">,</span>       <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_log_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;log1p&#34;</span><span class="p">,</span>           <span class="n">math_log1p</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_log1p_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;log10&#34;</span><span class="p">,</span>           <span class="n">math_log10</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_log10_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;log2&#34;</span><span class="p">,</span>            <span class="n">math_log2</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_log2_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;modf&#34;</span><span class="p">,</span>            <span class="n">math_modf</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_modf_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;pow&#34;</span><span class="p">,</span>             <span class="n">math_pow</span><span class="p">,</span>       <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_pow_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;radians&#34;</span><span class="p">,</span>         <span class="n">math_radians</span><span class="p">,</span>   <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_radians_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;sin&#34;</span><span class="p">,</span>             <span class="n">math_sin</span><span class="p">,</span>       <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_sin_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;sinh&#34;</span><span class="p">,</span>            <span class="n">math_sinh</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_sinh_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;sqrt&#34;</span><span class="p">,</span>            <span class="n">math_sqrt</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_sqrt_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;tan&#34;</span><span class="p">,</span>             <span class="n">math_tan</span><span class="p">,</span>       <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_tan_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;tanh&#34;</span><span class="p">,</span>            <span class="n">math_tanh</span><span class="p">,</span>      <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_tanh_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#34;trunc&#34;</span><span class="p">,</span>           <span class="n">math_trunc</span><span class="p">,</span>     <span class="n">METH_O</span><span class="p">,</span>         <span class="n">math_trunc_doc</span><span class="p">},</span>
+    <span class="p">{</span><span class="nb">NULL</span><span class="p">,</span>              <span class="nb">NULL</span><span class="p">}</span>           <span class="cm">/* sentinel */</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>找到其中的一些经典的函数，比如求最大公约数的gcd</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c">    <span class="p">{</span><span class="s">&#34;gcd&#34;</span><span class="p">,</span>             <span class="n">math_gcd</span><span class="p">,</span>       <span class="n">METH_VARARGS</span><span class="p">,</span>   <span class="n">math_gcd_doc</span><span class="p">},</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在这个文件中的定义是</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">math_gcd</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="o">*</span><span class="n">g</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyArg_ParseTuple</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&#34;OO:gcd&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">b</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="n">PyNumber_Index</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">PyNumber_Index</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">b</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">_PyLong_GCD</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+    <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+    <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">g</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><em>PyArg_ParseTuple</em>使用字符串&quot;OO:gcd&quot;，&ldquo;OO&quot;表明这个函数接收两个Python对象指针作为参数，冒号表示格式化的部分终结于此，后面的&quot;gcd&quot;是函数名，一般用于报错的信息。然后从这两个Python对象a和b中提取出整数，调用*_PyLong_GCD*求最大公约数，将a和b解引用，最后返回求得的值。</p>
+<p>这就是CPython本身定义一个模块的基本过程，整个mathmodule.c有两千多行代码，当然如果要细究它调用的API，整件事情会变得更加复杂。但如果要想让自己的Python更好用，这些API该学的还是得学。</p>
+<h2 id="numpy中的c语言扩展">Numpy中的C语言扩展</h2>
+<p>Numpy的代码就十分复杂了，它的代码里C和Python混用，C实现的是主要是内存层面多维向量的存储与计算，以及一些用C实现更快的函数。因为代码多，所以用我们上面的Extension函数是对头发不利的，所以Numpy实现了一个<em>Configuration</em>函数专门用以C语言部分的构建。就算是它的初始化函数也有两百多行，于是我决定使用Git大法，回到十三年前的v1.0版本。</p>
+<p>其实v1.0版本的Numpy已经很复杂了，但那个时候的结构比现在要更加清晰一些，当然那个年代用的还只是Python2的版本。</p>
+<p>Numpy中不仅给Python定义了一个模块，还给Python定义了一种新的对象类型<strong>Array</strong>，而整个Numpy所使用的计算的基本类型就是这个Array。如果你研究过CPython的源码，你大概就能看懂下面这段Array类型一些基本的设置</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyTypeObject</span> <span class="n">PyArray_Type</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">PyObject_HEAD_INIT</span><span class="p">(</span><span class="nb">NULL</span><span class="p">)</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/*ob_size*/</span>
+        <span class="s">&#34;numpy.ndarray&#34;</span><span class="p">,</span>                          <span class="cm">/*tp_name*/</span>
+        <span class="k">sizeof</span><span class="p">(</span><span class="n">PyArrayObject</span><span class="p">),</span>                    <span class="cm">/*tp_basicsize*/</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/*tp_itemsize*/</span>
+        <span class="cm">/* methods */</span>
+        <span class="p">(</span><span class="n">destructor</span><span class="p">)</span><span class="n">array_dealloc</span><span class="p">,</span>                <span class="cm">/*tp_dealloc  */</span>
+        <span class="p">(</span><span class="n">printfunc</span><span class="p">)</span><span class="nb">NULL</span><span class="p">,</span>                          <span class="cm">/*tp_print*/</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/*tp_getattr*/</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/*tp_setattr*/</span>
+        <span class="p">(</span><span class="n">cmpfunc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                       <span class="cm">/*tp_compare*/</span>
+        <span class="p">(</span><span class="n">reprfunc</span><span class="p">)</span><span class="n">array_repr</span><span class="p">,</span>                     <span class="cm">/*tp_repr*/</span>
+        <span class="o">&amp;</span><span class="n">array_as_number</span><span class="p">,</span>                         <span class="cm">/*tp_as_number*/</span>
+        <span class="o">&amp;</span><span class="n">array_as_sequence</span><span class="p">,</span>                       <span class="cm">/*tp_as_sequence*/</span>
+        <span class="o">&amp;</span><span class="n">array_as_mapping</span><span class="p">,</span>                        <span class="cm">/*tp_as_mapping*/</span>
+        <span class="p">(</span><span class="n">hashfunc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                              <span class="cm">/*tp_hash*/</span>
+        <span class="p">(</span><span class="n">ternaryfunc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                           <span class="cm">/*tp_call*/</span>
+        <span class="p">(</span><span class="n">reprfunc</span><span class="p">)</span><span class="n">array_str</span><span class="p">,</span>              <span class="cm">/*tp_str*/</span>
+
+        <span class="p">(</span><span class="n">getattrofunc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                          <span class="cm">/*tp_getattro*/</span>
+        <span class="p">(</span><span class="n">setattrofunc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                          <span class="cm">/*tp_setattro*/</span>
+        <span class="o">&amp;</span><span class="n">array_as_buffer</span><span class="p">,</span>                         <span class="cm">/*tp_as_buffer*/</span>
+        <span class="p">(</span><span class="n">Py_TPFLAGS_DEFAULT</span>
+         <span class="o">|</span> <span class="n">Py_TPFLAGS_BASETYPE</span>
+         <span class="o">|</span> <span class="n">Py_TPFLAGS_CHECKTYPES</span><span class="p">),</span>                <span class="cm">/*tp_flags*/</span>
+        <span class="cm">/*Documentation string */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/*tp_doc*/</span>
+
+        <span class="p">(</span><span class="n">traverseproc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                          <span class="cm">/*tp_traverse */</span>
+        <span class="p">(</span><span class="n">inquiry</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                               <span class="cm">/*tp_clear */</span>
+        <span class="p">(</span><span class="n">richcmpfunc</span><span class="p">)</span><span class="n">array_richcompare</span><span class="p">,</span>           <span class="cm">/*tp_richcompare */</span>
+        <span class="n">offsetof</span><span class="p">(</span><span class="n">PyArrayObject</span><span class="p">,</span> <span class="n">weakreflist</span><span class="p">),</span>     <span class="cm">/*tp_weaklistoffset */</span>
+
+        <span class="cm">/* Iterator support (use standard) */</span>
+
+        <span class="p">(</span><span class="n">getiterfunc</span><span class="p">)</span><span class="n">array_iter</span><span class="p">,</span>                  <span class="cm">/* tp_iter */</span>
+        <span class="p">(</span><span class="n">iternextfunc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                          <span class="cm">/* tp_iternext */</span>
+
+        <span class="cm">/* Sub-classing (new-style object) support */</span>
+
+        <span class="n">array_methods</span><span class="p">,</span>                            <span class="cm">/* tp_methods */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_members */</span>
+        <span class="n">array_getsetlist</span><span class="p">,</span>                         <span class="cm">/* tp_getset */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_base */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_dict */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_descr_get */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_descr_set */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_dictoffset */</span>
+        <span class="p">(</span><span class="n">initproc</span><span class="p">)</span><span class="mi">0</span><span class="p">,</span>                              <span class="cm">/* tp_init */</span>
+        <span class="n">array_alloc</span><span class="p">,</span>                              <span class="cm">/* tp_alloc */</span>
+        <span class="p">(</span><span class="n">newfunc</span><span class="p">)</span><span class="n">array_new</span><span class="p">,</span>                       <span class="cm">/* tp_new */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_free */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_is_gc */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_bases */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_mro */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_cache */</span>
+        <span class="mi">0</span><span class="p">,</span>                                        <span class="cm">/* tp_subclasses */</span>
+        <span class="mi">0</span>                                         <span class="cm">/* tp_weaklist */</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>而Numpy也基于这个Array类型做出了一系列函数，当初那个“简单”的v1.0的版本就有这么一堆函数</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="k">struct</span> <span class="n">PyMethodDef</span> <span class="n">array_module_methods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+	<span class="p">{</span><span class="s">&#34;_get_ndarray_c_version&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array__get_ndarray_c_version</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;_reconstruct&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array__reconstruct</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;set_string_function&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_set_string_function</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;set_numeric_ops&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_set_ops_function</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;set_typeDict&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_set_typeDict</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+
+	<span class="p">{</span><span class="s">&#34;array&#34;</span><span class="p">,</span>	<span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">_array_fromobject</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;arange&#34;</span><span class="p">,</span>  <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_arange</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;zeros&#34;</span><span class="p">,</span>	<span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_zeros</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;empty&#34;</span><span class="p">,</span>	<span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_empty</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;scalar&#34;</span><span class="p">,</span>      <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_scalar</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;where&#34;</span><span class="p">,</span>  <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_where</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;lexsort&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_lexsort</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">&#34;putmask&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_putmask</span><span class="p">,</span>
+         <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;fromstring&#34;</span><span class="p">,(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_fromString</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;fromiter&#34;</span><span class="p">,(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_fromIter</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;concatenate&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_concatenate</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="o">|</span><span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;inner&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_innerproduct</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;dot&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_matrixproduct</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;_fastCopyAndTranspose&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_fastCopyAndTranspose</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;correlate&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_correlate</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;frombuffer&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_frombuffer</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;fromfile&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_fromfile</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;can_cast&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">array_can_cast_safely</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;newbuffer&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">new_buffer</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">&#34;getbuffer&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">buffer_buffer</span><span class="p">,</span>
+	 <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">&#34;int_asbuffer&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">as_buffer</span><span class="p">,</span>
+         <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">&#34;format_longfloat&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">format_longfloat</span><span class="p">,</span>
+         <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">&#34;compare_chararrays&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">compare_chararrays</span><span class="p">,</span>
+         <span class="n">METH_VARARGS</span> <span class="o">|</span> <span class="n">METH_KEYWORDS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">&#34;test_interrupt&#34;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyCFunction</span><span class="p">)</span><span class="n">test_interrupt</span><span class="p">,</span>
+         <span class="n">METH_VARARGS</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
+	<span class="p">{</span><span class="nb">NULL</span><span class="p">,</span>		<span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">}</span>		<span class="cm">/* sentinel */</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>比如向量计算中常用到内积，就长成这个样子</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span><span class="nf">array_innerproduct</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">dummy</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+	<span class="n">PyObject</span> <span class="o">*</span><span class="n">b0</span><span class="p">,</span> <span class="o">*</span><span class="n">a0</span><span class="p">;</span>
+
+	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyArg_ParseTuple</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&#34;OO&#34;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">a0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">b0</span><span class="p">))</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+
+	<span class="k">return</span> <span class="n">_ARET</span><span class="p">(</span><span class="n">PyArray_InnerProduct</span><span class="p">(</span><span class="n">a0</span><span class="p">,</span> <span class="n">b0</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>而最后那个<em>PyArray_InnerProduct</em>函数写了有大约一百多行，期间做了各种类型检查、边界检查等等，比我们平时所写的内积要复杂很多也严格很多。</p>
+<h1 id="结">结</h1>
+<p>总的来说，我还是很喜欢Python的语法的，但是Python的速度确实跟不上时代的步伐，虽然Python写起来很快，但是真正运行起来就真的让人头疼了；反过来，C语言虽然写起来很头疼，但跑起来真的很爽。</p>
+<p>现在也只能寄希望与JIT技术的发展，能给Python带来新的突破吧。</p>
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">Moscribe</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2020-11-12
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/python/">Python</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/pythonobjects/">
+            <span class="next-text nav-default">[编程随笔]Python--面向对象的编程</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:liumiaogemini@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="http://github.com/moscribe" class="iconfont icon-github" title="github"></a>
+      <a href="http://zhihu.com/people/liu-miao-85-42" class="iconfont icon-zhihu" title="zhihu"></a>
+  <a href="https://moscribe.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2020<span class="heart"><i class="iconfont icon-heart"></i></span><span>莫书</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c12618f9a600c40bd024996677e951e64d3487006775aeb22e200c990006c5c7.js"></script>
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js" integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

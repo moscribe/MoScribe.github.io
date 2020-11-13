@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>[编程随笔]Python--面向对象的编程 - 计算与编程</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="莫书" /><meta name="description" content=" 在Python的代码中, 你所看到的每一个字符串, 都是对象.
+" /><meta name="keywords" content="Hugo, Programming, Python, C&#43;&#43;" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.78.1 with theme even" />
+
+
+<link rel="canonical" href="https://moscribe.github.io/post/pythonobjects/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="[编程随笔]Python--面向对象的编程" />
+<meta property="og:description" content="
+在Python的代码中, 你所看到的每一个字符串, 都是对象.
+" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://moscribe.github.io/post/pythonobjects/" />
+<meta property="article:published_time" content="2020-02-10T14:29:10+00:00" />
+<meta property="article:modified_time" content="2020-02-10T14:29:10+00:00" />
+<meta itemprop="name" content="[编程随笔]Python--面向对象的编程">
+<meta itemprop="description" content="
+在Python的代码中, 你所看到的每一个字符串, 都是对象.
+">
+<meta itemprop="datePublished" content="2020-02-10T14:29:10+00:00" />
+<meta itemprop="dateModified" content="2020-02-10T14:29:10+00:00" />
+<meta itemprop="wordCount" content="3126">
+
+
+
+<meta itemprop="keywords" content="Python," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="[编程随笔]Python--面向对象的编程"/>
+<meta name="twitter:description" content="
+在Python的代码中, 你所看到的每一个字符串, 都是对象.
+"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">MoScribe</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">主页</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">归档</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">MoScribe</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">主页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">归档</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">分类</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">[编程随笔]Python--面向对象的编程</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2020-02-10 </span>
+        
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#无用之用">无用之用</a>
+      <ul>
+        <li>
+          <ul>
+            <li></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#当有大用">当有大用</a></li>
+    <li><a href="#大道至繁-大道至简">大道至繁, 大道至简</a></li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <blockquote>
+<p>在Python的代码中, 你所看到的每一个字符串, 都是对象.</p>
+</blockquote>
+<h1 id="无用之用">无用之用</h1>
+<h4 id="指向一切的指针">指向一切的指针</h4>
+<p>在Cpython的代码中, 最常见的一个指针就是<em>PyObject*</em>, 这个指针是定义在<em>Include/object.h</em>中的一个结构体:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">_object</span> <span class="p">{</span>
+    <span class="n">_PyObject_HEAD_EXTRA</span>
+    <span class="n">Py_ssize_t</span> <span class="n">ob_refcnt</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">_typeobject</span> <span class="o">*</span><span class="n">ob_type</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">PyObject</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这段代码的意思也很明确, 先是头部初始化, 然后一个引用计数器, 最后一个结构体指针比较复杂, 它表示这个结构体所拥有的类型, 这个结构体中包含了一个字符串, 几个整数以及一大堆的函数指针, CPython的动态类型系统就是在运行时通过该结构体判断类型并通过结构体中的函数指针完成各种操作的.</p>
+<p>不过最为有趣的, 是PyObject的注释:</p>
+<blockquote>
+<p>Nothing is actually declared to be a PyObject, but every pointer to
+a Python object can be cast to a PyObject*.  This is inheritance built
+by hand.  Similarly every pointer to a variable-size Python object can,
+in addition, be cast to PyVarObject*.</p>
+</blockquote>
+<p>上来就告诉我不会有直接定义成<em>PyObject*</em> 的东西, 但每一个指向Python对象的指针都可以被转换为<em>PyObject*</em>. 后面一句话更为神奇: <strong>这是手工实现的继承</strong>.</p>
+<h4 id="不定结构">不定结构</h4>
+<p>到现在为止, 这个结构体功能上是不完整的. 因为这个结构体在内存中是定长的, 但是Python中存在大量变长结构, 光用一个结构体是无法于Python中的数据结构意义对应的, 也就是说我们需要一个结构体, 能管理Python中的变长结构. 当然这里的变长并不是让结构体变长, 在C语言里面可以使用指针指向变长的内存区域, 通过内存管理函数控制内存的大小; 与此同时, 结构体头部需要记录变长数据区的大小, 因此就有了<em>PyVarObject</em>这个结构体:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">PyObject</span> <span class="n">ob_base</span><span class="p">;</span>
+    <span class="n">Py_ssize_t</span> <span class="n">ob_size</span><span class="p">;</span> <span class="cm">/* Number of items in variable part */</span>
+<span class="p">}</span> <span class="n">PyVarObject</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个结构体以<em>PyObject</em>开头, 只是在后面加了一个记录内存区域大小的整数. 按照上面注释的说法, 这个结构体&quot;继承&quot;自<em>PyObject</em>, 所有适用于<em>PyObject</em>的操作均适用于<em>PyVarObject</em>. 于是我们就有了可以同时管理定长于变长内存区域的结构体了.</p>
+<h4 id="一些宏">一些宏</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#define PyObject_HEAD                   PyObject ob_base;
+</span><span class="cp">#define PyObject_VAR_HEAD               PyVarObject ob_base;
+</span><span class="cp">#define _PyObject_CAST(op)              ((PyObject*)(op))
+</span><span class="cp">#define _PyVarObject_CAST(op)           ((PyVarObject*)(op))
+</span></code></pre></td></tr></table>
+</div>
+</div><p>前两个宏用在声明各种Object的时候, 放在结构体的头部, 这样以来每个结构体所代表的类型都可以用*PyObject* *指向其内存区域. 后两个宏用于显式类型转换.</p>
+<h4 id="无处不在的结构">无处不在的结构</h4>
+<p>看遍CPython的代码就会发现, 虽然代码里面充斥着无数的<em>PyObject</em>, 但是从来没有一个变量或者结构是直接用它声明或者定义的. <em>PyObject</em>这个结构体存在于每个对象内存区的开头的位置, 从表面上看来, 它不是任何一个对象, 但实际上, <em>PyObject</em>是每一个对象.</p>
+<p>先看一个简单的列表插入的函数:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">int</span>
+<span class="nf">PyList_Insert</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">op</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">where</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">newitem</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyList_Check</span><span class="p">(</span><span class="n">op</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">PyErr_BadInternalCall</span><span class="p">();</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">ins1</span><span class="p">((</span><span class="n">PyListObject</span> <span class="o">*</span><span class="p">)</span><span class="n">op</span><span class="p">,</span> <span class="n">where</span><span class="p">,</span> <span class="n">newitem</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个函数接受的参数里面不管时待插入的元素<em>newitem</em>还是要插入元素的列表<em>op</em>都是以<em>PyObject</em>指针的形式传入的, 先检查是否为列表结构,然后才会将这个结构指针显式的转换为列表的对象指针并进行一系列的操作. 像这样的函数在CPython中比比皆是, 作为模块的API, 这些函数的参数都是以<em>PyObject</em>的形式传入的, 在处理之前都必须要经过类型的检查才能调用模块内相应的函数.</p>
+<p>通过将所有的对象管理的指针全都变成<em>PyObject</em>, CPython实现了语言层面对&quot;对象&quot;这一概念的抽象化.</p>
+<h1 id="当有大用">当有大用</h1>
+<p>先来看两个CPython中定义的对象, 为了便于理解, 我把代码里的注释也放上来了:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">PyObject_HEAD</span>
+    <span class="kt">double</span> <span class="n">ob_fval</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">PyFloatObject</span><span class="p">;</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">PyObject_VAR_HEAD</span>
+    <span class="cm">/* Vector of pointers to list elements.  list[0] is ob_item[0], etc. */</span>
+    <span class="n">PyObject</span> <span class="o">**</span><span class="n">ob_item</span><span class="p">;</span>
+
+    <span class="cm">/* ob_item contains space for &#39;allocated&#39; elements.  The number
+</span><span class="cm">     * currently in use is ob_size.
+</span><span class="cm">     * Invariants:
+</span><span class="cm">     *     0 &lt;= ob_size &lt;= allocated
+</span><span class="cm">     *     len(list) == ob_size
+</span><span class="cm">     *     ob_item == NULL implies ob_size == allocated == 0
+</span><span class="cm">     * list.sort() temporarily sets allocated to -1 to detect mutations.
+</span><span class="cm">     *
+</span><span class="cm">     * Items must normally not be NULL, except during construction when
+</span><span class="cm">     * the list is not yet visible outside the function that builds it.
+</span><span class="cm">     */</span>
+    <span class="n">Py_ssize_t</span> <span class="n">allocated</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">PyListObject</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>第一个结构体是Python里面的浮点数, 值部分就是C语言里面的double. 这是一个典型的定长结构, 所以头部使用的是<em>PyObject_HEAD</em>这个宏. 第二个结构体是Python里面用到最多的list结构, 是一个典型的变长结构, 所以头部使用的是<em>PyObject_VAR_HEAD</em>这个宏. 这是两个截然不同的类型的结构体, 但是它们的开头都是一个<em>PyObject</em>的结构, 这个结构在所有的表示类型的结构体中都位于开头的位置, 因此任意类型的指针都可以被显式或隐式的转换成<em>PyObject*<em>的指针, 同时任何</em>PyObject*<em>的指针也可以根据</em>PyObject</em>结构体中的<em>ob_type</em>指向的类型被显式或隐式的转换成对应的类型.</p>
+<p>一个完整的类型由以下的结构体定义:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">_typeobject</span> <span class="p">{</span>
+    <span class="n">PyObject_VAR_HEAD</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tp_name</span><span class="p">;</span> <span class="cm">/* For printing, in format &#34;&lt;module&gt;.&lt;name&gt;&#34; */</span>
+    <span class="n">Py_ssize_t</span> <span class="n">tp_basicsize</span><span class="p">,</span> <span class="n">tp_itemsize</span><span class="p">;</span> <span class="cm">/* For allocation */</span>
+
+    <span class="cm">/* Methods to implement standard operations */</span>
+    <span class="p">...</span>
+   
+    <span class="cm">/* Method suites for standard classes */</span>
+    <span class="p">...</span>
+    
+    <span class="cm">/* More standard operations (here for binary compatibility) */</span>
+    <span class="p">...</span>
+    
+    <span class="cm">/* Functions to access object as input/output buffer */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* Flags to define presence of optional/expanded features */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* Assigned meaning in release 2.0 */</span>
+    <span class="cm">/* call function for all accessible objects */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* delete references to contained objects */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* Assigned meaning in release 2.1 */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* weak reference enabler */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* Iterators */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* Attribute descriptor and subclassing stuff */</span>
+    <span class="p">...</span>
+
+    <span class="cm">/* Type attribute cache version tag. Added in version 2.6 */</span>
+    <span class="p">...</span>
+<span class="p">}</span> <span class="n">PyTypeObject</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这是一个很长的结构体, 这里只展现个大概. 这个结构体里面定义了一个对象在运行时所有可能的操作, 如果是列表对象, 就会一个由该结构体定义的一个<em>PyList_Type</em>, 在运行时会创建这样一个<em>PyList_Type</em>的结构体并一直存在于内存的某一个地方, 类型检查器会检查内存首部的指针是否和<em>PyList_Type</em>的地址匹配, 也就是运行时的类型检查, 比如上面的<em>PyList_New</em>函数中的*PyList_Check()*宏就是一个类型检查器.</p>
+<p>以上所说的过程就是Python中实现动态类型的基础. 在Python的代码中, 所有解析出的符号和语法单元都有一个对象指针直接管理. 在Python运行的时候才会检查对象的类型, 将其指针转换成对应类型的指针, 然后才可以调用对象的值和函数. 这一设计在很大程度上导致了Python的运行缓慢(另一个原因是数据运行在堆上).</p>
+<p>这一设计也体现了写Python代码时的一个基本思想: <strong>一切皆是对象</strong>, 无论是一个数, 一个字符串, 一个列表还是一个函数, 在内存里面它们都只是一段内存上的数据, 一个由<em>PyObject</em>指针管理的对象. 这也是我们在学习Python的时候并不会像学习Java一样纠结于何为对象, 而更多的关注代码的逻辑本身. 当一切都是对象的时候, 其实就可以不用管什么是对象了, 专注于逻辑本身才是编程的本意.</p>
+<h1 id="大道至繁-大道至简">大道至繁, 大道至简</h1>
+<p>我所接触的第一门编程语言是Java, 没有其它原因, 只是因为当初它的名气够大. Java中有各种繁复的概念, 现在看来基本都是这几十年的面向对象编程的积累. 与C++不同, Java的概念并不是为了榨取机器的性能, 而是一种经验上的总结. Java 是大道至繁的典型代表, 是工业时代的产物.</p>
+<p>何为对象? <strong>对象就是一段计算机内存数据的所有权.</strong> 何为继承? <strong>继承就是内存区的复合</strong>. 我自己是比较喜欢这个解释, 因为相比于各种Java书中的冗长的解释, 这个解释更加地接近数学. 对象这个概念可以说是数学中的<strong>集合</strong>在编程中的体现. 现代数学的基石是集合, 处理的基本单元也是集合. 要把集合这个概念从数学的抽象变成计算机内存中的具体数据并不是一件简单的事情, Python的设计则是一种尝试, 这个设计继承自Lisp. 在Lisp中, <strong>表</strong>这一结构就是数学集合的抽象, 或者说是集合的延伸. 在Python中, 不仅仅是将所有写下的符号通通看成是对象, 而且对象可以是由对象组成的. 一旦一个数学上的概念可以开始递归, 那这个概念就有了近乎无限的变化可能.</p>
+<p>大道至繁, 是我们总是想用一个工具解决所有问题, 所以才会越来越复杂.</p>
+<p>大道至简, 则是在认识到了一定程度的时候, 找出共同的地方; 研究抽象的共同点, 会让事情变得简单. Python是这一理念的践行者, 但是Python既不是做的最好的, 也不是走的最远的, Python只是最受欢迎的那一个.</p>
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">莫书</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2020-02-10
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/python/">Python</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/pyext/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">[编程随笔]Python的C扩展</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:liumiaogemini@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="http://github.com/moscribe" class="iconfont icon-github" title="github"></a>
+      <a href="http://zhihu.com/people/liu-miao-85-42" class="iconfont icon-zhihu" title="zhihu"></a>
+  <a href="https://moscribe.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2020<span class="heart"><i class="iconfont icon-heart"></i></span><span>莫书</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c12618f9a600c40bd024996677e951e64d3487006775aeb22e200c990006c5c7.js"></script>
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js" integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
